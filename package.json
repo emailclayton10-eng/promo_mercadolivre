@@ -1,0 +1,17 @@
+{
+  "name": "promo-mercadolivre",
+  "version": "1.0.0",
+  "description": "Inclusão rápida e em massa de anúncios do Mercado Livre em campanhas promocionais, respeitando custo e lucro mínimo.",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env --watch src/server.js",
+    "demo": "ML_MOCK=1 DB_PATH=./data/demo.db node --disable-warning=ExperimentalWarning src/server.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
