@@ -121,7 +121,7 @@ async function loadStatus() {
   status = await api('GET', '/status');
   $('#account').innerHTML = status.connected
     ? `Conectado como <b>${esc(status.user.nickname)}</b>${status.mock ? ' <span class="badge warn">simulado</span>' : ''}`
-    : `<a href="#/painel">Conectar ao Mercado Livre</a>`;
+    : `<a href="${status.configured ? '/auth/login' : '#/painel'}">Conectar ao Mercado Livre</a>`;
   for (const j of status.running) if (!watchedJobs.has(j.id)) watchJob(j);
   return status;
 }
