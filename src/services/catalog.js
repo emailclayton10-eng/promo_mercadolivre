@@ -170,13 +170,15 @@ function listingWhere({ search = '', linked = '', status = '', productId } = {})
 export function enrichListing(row, settings) {
   const ctx = buildContext(row, settings);
   const minPrice = minViablePrice(ctx);
-  const current = ctx.linked ? profitAt(row.price, ctx) : null;
+  const atPrice = profitAt(row.price, ctx);
+  const current = ctx.linked ? atPrice : null;
   return {
     ...row,
     fee_percent: ctx.feePercent,
     shipping_effective: ctx.shipping,
     min_profit_rule: ctx.minProfit,
     min_margin_rule: ctx.minMarginPercent,
+    current_net: atPrice.net,
     current_profit: current?.profit ?? null,
     current_margin: current?.margin ?? null,
     min_viable_price: minPrice,

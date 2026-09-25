@@ -17,6 +17,21 @@ cp .env.example .env     # preencha as credenciais do Mercado Livre
 npm start                # http://localhost:3000
 ```
 
+### Publicar com endereço fixo (Railway)
+
+Deixa a aplicação sempre no ar num endereço HTTPS fixo, que se atualiza sozinho a cada mudança na branch `main`. A imagem é definida pelo `Dockerfile`, então também funciona no Render, Fly.io ou em qualquer servidor com Docker.
+
+1. Crie uma conta em <https://railway.com> (entre com o GitHub).
+2. **New Project → Deploy from GitHub repo →** escolha `promo_mercadolivre`.
+3. No serviço criado: **Settings → Networking → Generate Domain**. Anote o endereço (ex.: `https://promo-ml.up.railway.app`).
+4. **Add Volume** (clique direito no serviço → *Attach volume*) com *mount path* `/app/data`. É onde fica o banco de dados; sem isso os dados se perdem a cada atualização.
+5. Em **Variables**, adicione:
+   - `APP_USER` e `APP_PASSWORD` — login para proteger a aplicação (ela fica na internet);
+   - `ML_CLIENT_ID`, `ML_CLIENT_SECRET` — do aplicativo no DevCenter do Mercado Livre;
+   - `ML_REDIRECT_URI` = `https://SEU-ENDERECO/auth/callback` (o mesmo cadastrado no DevCenter).
+
+   Para só testar com dados fictícios, use `ML_MOCK=1` no lugar das variáveis do Mercado Livre.
+
 ### Rodar direto no navegador (GitHub Codespaces)
 
 No GitHub: **Code → Codespaces → Create codespace on main**. As dependências são instaladas e a aplicação (modo demonstração) inicia sozinha, abrindo uma aba na porta 3000. Para voltar depois, acesse <https://github.com/codespaces> e abra o codespace existente: a aplicação inicia de novo automaticamente.
@@ -68,10 +83,12 @@ Para proteger a aplicação com senha, defina `APP_USER` e `APP_PASSWORD`.
 ## Como a viabilidade é calculada
 
 ```
-lucro  = preço recebido − comissão − custo fixo − frete pago pelo vendedor − impostos − custo dos produtos
-margem = lucro ÷ preço recebido
-viável = lucro ≥ lucro mínimo  E  margem ≥ margem mínima
+você recebe    = preço − tarifa do ML − frete pago pelo vendedor   (calculado com os dados do Mercado Livre)
+lucro líquido  = você recebe − custo dos produtos (− impostos, se configurados)
+viável         = lucro líquido ≥ lucro mínimo  E  margem ≥ margem mínima
 ```
+
+No dia a dia só é preciso definir o **lucro líquido mínimo** (e/ou a margem mínima). Tarifa e frete são buscados do Mercado Livre na importação; os campos de tarifa, frete e impostos ficam em *Ajustes avançados* e só precisam ser mexidos se o valor recebido não bater com o que o Mercado Livre mostra.
 
 - **Comissão**: percentual da categoria + tipo de anúncio (via `/sites/MLB/listing_prices`), ou ajuste manual por anúncio.
 - **Custo fixo**: por faixa de preço (configurável no Painel — confira os valores vigentes).

@@ -179,27 +179,31 @@ routes.painel = async (view) => {
       </section>
 
       <section class="card">
-        <h2>Regras de lucro e custos</h2>
+        <h2>Regras de lucro</h2>
         <form id="settings">
           <div class="form-grid">
-            <label class="field">Margem mínima padrão (%)<input name="default_min_margin_percent" value="${s.default_min_margin_percent}"></label>
-            <label class="field">Lucro mínimo padrão (R$)<input name="default_min_profit" value="${s.default_min_profit}"></label>
-            <label class="field">Impostos sobre a venda (%)<input name="tax_percent" value="${s.tax_percent}"></label>
-            <label class="field">Comissão padrão (%)<input name="default_fee_percent" value="${s.default_fee_percent}"></label>
-            <label class="field">Frete padrão (R$)<input name="default_shipping_cost" value="${s.default_shipping_cost}"></label>
-            <label class="field">Frete grátis a partir de (R$)<input name="free_shipping_threshold" value="${s.free_shipping_threshold}"></label>
+            <label class="field">Lucro líquido mínimo (R$)<input name="default_min_profit" value="${s.default_min_profit}"></label>
+            <label class="field">Margem líquida mínima (%)<input name="default_min_margin_percent" value="${s.default_min_margin_percent}"></label>
             <label class="field">Percentual geral padrão (%)<input name="default_percent" value="${s.default_percent}"></label>
           </div>
-          <h2 style="margin-top:16px">Custo fixo por venda</h2>
-          <p class="help">Cobrado por unidade vendida abaixo de cada faixa de preço. Confira os valores vigentes no Mercado Livre.</p>
-          <div id="bands">${s.fixed_fee_bands.map((b) => bandRow(b)).join('')}</div>
-          <div class="toolbar" style="margin-top:8px"><button type="button" id="add-band" class="link">+ adicionar faixa</button></div>
-          <label class="inline"><input type="checkbox" name="fetch_shipping_costs" ${s.fetch_shipping_costs ? 'checked' : ''}> Consultar custo do frete de cada anúncio ao importar</label>
-          <p class="inline" style="gap:12px">Importar anúncios com status:
-            ${['active', 'paused'].map((x) => `<label class="inline"><input type="checkbox" name="sync_statuses" value="${x}" ${s.sync_statuses.includes(x) ? 'checked' : ''}> ${x === 'active' ? 'ativos' : 'pausados'}</label>`).join('')}
-          </p>
+          <p class="help">Lucro líquido = <b>valor que você recebe do Mercado Livre</b> − custo do produto. O valor recebido (já sem tarifa e frete) é calculado automaticamente com os dados do Mercado Livre. Um anúncio é viável quando atende o lucro líquido mínimo <b>e</b> a margem mínima (use 0 para ignorar uma das regras). Produtos podem ter regras próprias.</p>
+          <details style="margin:8px 0 12px">
+            <summary class="small muted" style="cursor:pointer">Ajustes avançados (normalmente não é preciso mexer)</summary>
+            <div class="form-grid" style="margin-top:12px">
+              <label class="field">Impostos sobre a venda (%)<input name="tax_percent" value="${s.tax_percent}"></label>
+              <label class="field">Tarifa usada se o ML não informar (%)<input name="default_fee_percent" value="${s.default_fee_percent}"></label>
+              <label class="field">Frete usado se o ML não informar (R$)<input name="default_shipping_cost" value="${s.default_shipping_cost}"></label>
+              <label class="field">Frete grátis a partir de (R$)<input name="free_shipping_threshold" value="${s.free_shipping_threshold}"></label>
+            </div>
+            <p class="help">Custo fixo por venda cobrado pelo ML abaixo de cada faixa de preço (usado ao simular preços promocionais):</p>
+            <div id="bands">${s.fixed_fee_bands.map((b) => bandRow(b)).join('')}</div>
+            <div class="toolbar" style="margin-top:8px"><button type="button" id="add-band" class="link">+ adicionar faixa</button></div>
+            <label class="inline"><input type="checkbox" name="fetch_shipping_costs" ${s.fetch_shipping_costs ? 'checked' : ''}> Consultar o frete de cada anúncio ao importar</label>
+            <p class="inline" style="gap:12px">Importar anúncios com status:
+              ${['active', 'paused'].map((x) => `<label class="inline"><input type="checkbox" name="sync_statuses" value="${x}" ${s.sync_statuses.includes(x) ? 'checked' : ''}> ${x === 'active' ? 'ativos' : 'pausados'}</label>`).join('')}
+            </p>
+          </details>
           <div class="toolbar"><button class="primary">Salvar regras</button></div>
-          <p class="help">Lucro = preço − comissão − custo fixo − frete (quando o vendedor paga) − impostos − custo dos produtos. Margem = lucro ÷ preço. Um anúncio é viável na campanha quando atende a margem <b>e</b> o lucro mínimo. Produtos podem ter margem/lucro mínimos próprios.</p>
         </form>
       </section>
     </div>`;
@@ -368,7 +372,7 @@ routes.anuncios = async (view, arg) => {
     const list = $('#list');
     list.innerHTML = r.rows.length
       ? `<div class="table-wrap"><table><thead><tr><th class="check"><input type="checkbox" id="chk-all"></th><th>Anúncio</th><th>SKU</th><th>Produto(s)</th>
-        <th class="num">Preço</th><th class="num">Custo</th><th class="num">Comissão</th><th class="num">Frete</th><th class="num">Lucro atual</th><th class="num">Preço mín. viável</th><th class="num">Desc. máx.</th><th class="num">Campanhas</th></tr></thead><tbody>
+        <th class="num">Preço</th><th class="num">Custo</th><th class="num">Você recebe</th><th class="num">Lucro líquido</th><th class="num">Preço mín. viável</th><th class="num">Desc. máx.</th><th class="num">Campanhas</th></tr></thead><tbody>
         ${r.rows
           .map((l) => {
             const sel = lstState.allFilter || lstState.selected.has(l.id);
@@ -377,8 +381,7 @@ routes.anuncios = async (view, arg) => {
               <div class="small muted">${l.id} · ${l.status === 'active' ? 'ativo' : esc(l.status)} · ${l.available_quantity ?? 0} un.</div></div></div></td>
             <td class="small nowrap">${esc(l.sku || '—')}</td>
             <td class="small">${l.products ? esc(l.products) : '<span class="badge warn">sem vínculo</span>'}</td>
-            <td class="num">${money(l.price)}</td><td class="num">${money(l.cost)}</td><td class="num">${pct(l.fee_percent)}</td>
-            <td class="num">${money(l.shipping_effective)}</td>
+            <td class="num">${money(l.price)}</td><td class="num">${money(l.cost)}</td><td class="num">${money(l.current_net)}</td>
             <td class="num">${l.current_profit === null ? '—' : `${signed(l.current_profit)}<div class="small muted">${pct(l.current_margin)}</div>`}</td>
             <td class="num">${money(l.min_viable_price)}</td>
             <td class="num">${l.max_discount === null ? '—' : pct(l.max_discount)}</td>
@@ -494,19 +497,18 @@ async function listingDetail(view, id) {
         <dl class="kv">
           <dt>Preço atual</dt><dd>${money(l.price)}</dd>
           <dt>Custo dos produtos</dt><dd>${money(l.cost)}</dd>
-          <dt>Comissão</dt><dd>${pct(l.fee_percent)}</dd>
-          <dt>Frete pago pelo vendedor</dt><dd>${money(l.shipping_effective)} ${l.free_shipping ? '' : '<span class="muted small">(sem frete grátis)</span>'}</dd>
-          <dt>Regra</dt><dd>margem ≥ ${pct(l.min_margin_rule)} e lucro ≥ ${money(l.min_profit_rule)}</dd>
-          <dt>Lucro no preço atual</dt><dd>${signed(l.current_profit)} (${pct(l.current_margin)})</dd>
+          <dt>Você recebe do ML</dt><dd><b>${money(l.current_net)}</b> <span class="muted small">(tarifa ${pct(l.fee_percent)} · frete ${money(l.shipping_effective)})</span></dd>
+          <dt>Regra</dt><dd>lucro líquido ≥ ${money(l.min_profit_rule)} e margem ≥ ${pct(l.min_margin_rule)}</dd>
+          <dt>Lucro líquido atual</dt><dd>${signed(l.current_profit)} (${pct(l.current_margin)})</dd>
           <dt>Preço mínimo viável</dt><dd><b>${money(l.min_viable_price)}</b></dd>
           <dt>Desconto máximo viável</dt><dd><b>${pct(l.max_discount)}</b></dd>
         </dl>
-        <h2 style="margin-top:16px">Ajustes manuais</h2>
-        <form id="ov" class="form-grid">
+        <details style="margin-top:16px"><summary class="small muted" style="cursor:pointer">Corrigir tarifa ou frete deste anúncio (se o valor recebido não bater com o ML)</summary>
+        <form id="ov" class="form-grid" style="margin-top:12px">
           <label class="field">Frete fixo (R$)<input name="shipping_cost_override" placeholder="automático" value="${l.shipping_cost_override ?? ''}"></label>
           <label class="field">Comissão (%)<input name="fee_percent_override" placeholder="automático" value="${l.fee_percent_override ?? ''}"></label>
           <div style="align-self:end"><button class="primary">Salvar ajustes</button></div>
-        </form>
+        </form></details>
       </section>
     </div>`;
   const link = (mode) => {
@@ -716,14 +718,14 @@ async function campaignDetail(view, id) {
     list.innerHTML = r.rows.length
       ? `<div class="table-wrap"><table><thead><tr><th class="check"><input type="checkbox" id="chk-all"></th>${th('title', 'Anúncio', '')}
         ${th('cost', 'Custo')}${th('original_price', 'Preço original')}<th class="num">Faixa permitida</th>${th('target_price', 'Preço promo')}${th('discount', 'Desc.')}
-        ${th('profit', 'Lucro')}${th('margin', 'Margem')}${th('min_viable_price', 'Preço mín.')}${th('max_viable_discount', 'Desc. máx.')}<th>Situação</th></tr></thead><tbody>
+        ${th('profit', 'Lucro líq.')}${th('margin', 'Margem')}${th('min_viable_price', 'Preço mín.')}${th('max_viable_discount', 'Desc. máx.')}<th>Situação</th></tr></thead><tbody>
         ${r.rows
           .map(
             (x) => `<tr data-id="${x.listing_id}" class="${detState.selected.has(x.listing_id) ? 'selected' : ''}"><td class="check"><input type="checkbox" class="chk" ${detState.selected.has(x.listing_id) ? 'checked' : ''}></td>
           <td><div class="item-cell"><img class="thumb" loading="lazy" src="${esc(x.thumbnail || '')}" alt=""><div><div class="t"><a href="#/anuncios/${x.listing_id}">${esc(x.title)}</a></div><div class="small muted">${x.listing_id} · ${x.available_quantity ?? '—'} un. · ${x.products ? esc(x.products) : 'sem produto'}</div></div></div></td>
           <td class="num">${money(x.cost)}</td><td class="num">${money(x.original_price)}</td>
           <td class="num small muted">${x.min_allowed !== null ? `${money(x.min_allowed)} – ${money(x.max_allowed)}` : x.seller_percentage !== null ? `você ${pct(x.seller_percentage)} · ML ${pct(x.meli_percentage)}` : '—'}</td>
-          <td class="num"><b>${money(x.target_price)}</b>${x.received !== x.target_price && x.received !== null ? `<div class="small muted">recebe ${money(x.received)}</div>` : ''}</td>
+          <td class="num"><b>${money(x.target_price)}</b>${x.net !== null ? `<div class="small muted">você recebe ${money(x.net)}</div>` : ''}</td>
           <td class="num">${pct(x.discount)}</td>
           <td class="num">${signed(x.profit)}</td><td class="num">${signed(x.margin, pct)}</td>
           <td class="num">${money(x.min_viable_price)}</td><td class="num">${pct(x.max_viable_discount)}</td>

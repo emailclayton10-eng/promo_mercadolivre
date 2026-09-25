@@ -60,6 +60,7 @@ export function profitAt(price, ctx, received = price) {
   const profit = received - fee - ship - tax - ctx.cost;
   return {
     profit: round2(profit),
+    net: round2(received - fee - ship), // o que o Mercado Livre repassa (antes do custo do produto e impostos)
     margin: received > 0 ? round2((profit / received) * 100) : 0,
     fee: round2(fee),
     shipping: round2(ship),

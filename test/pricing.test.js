@@ -11,6 +11,8 @@ test('lucro considera comissão, custo fixo, frete e impostos', () => {
   // 100 - 12 (comissão) - 20 (frete) - 6 (imposto) - 50 (custo) = 12
   assert.equal(r.profit, 12);
   assert.equal(r.margin, 12);
+  // valor repassado pelo ML = preço - tarifa - frete
+  assert.equal(r.net, 68);
 });
 
 test('abaixo do limite de frete grátis o vendedor paga custo fixo e não paga frete', () => {
