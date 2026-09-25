@@ -17,6 +17,10 @@ cp .env.example .env     # preencha as credenciais do Mercado Livre
 npm start                # http://localhost:3000
 ```
 
+### Rodar direto no navegador (GitHub Codespaces)
+
+No GitHub: **Code → Codespaces → Create codespace on main**. As dependências são instaladas e a aplicação (modo demonstração) inicia sozinha, abrindo uma aba na porta 3000. Para voltar depois, acesse <https://github.com/codespaces> e abra o codespace existente: a aplicação inicia de novo automaticamente.
+
 ### Modo demonstração (sem conta do Mercado Livre)
 
 ```bash
