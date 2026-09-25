@@ -105,8 +105,8 @@ export function evaluateRow(promo, row, ctx, { strategy = 'percent', percent = 1
     result = profitAt(target, ctx, received);
     viable = isViable(result, ctx);
     if (!viable) {
-      if (result.profit < ctx.minProfit) reason = `lucro abaixo do mínimo (R$ ${ctx.minProfit.toFixed(2).replace('.', ',')})`;
-      else reason = `margem abaixo do mínimo (${ctx.minMarginPercent}%)`;
+      if (result.profit < ctx.minProfit) reason = `lucro líquido abaixo do mínimo (R$ ${ctx.minProfit.toFixed(2).replace('.', ',')})`;
+      else reason = `margem líquida abaixo do mínimo (${ctx.minMarginPercent}%)`;
     }
   }
 
@@ -127,6 +127,7 @@ export function evaluateRow(promo, row, ctx, { strategy = 'percent', percent = 1
     seller_percentage: row.seller_percentage,
     target_price: target === null ? null : round2(target),
     received: received === null || received === undefined ? null : round2(received),
+    net: target === null || target === undefined ? null : profitAt(target, ctx, received).net,
     discount: target ? discountPercent(original, target) : null,
     profit: result?.profit ?? null,
     margin: result?.margin ?? null,
